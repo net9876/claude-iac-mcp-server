@@ -1,0 +1,44 @@
+name: azure-postgresql-flexible
+display_name: Azure Database for PostgreSQL Flexible Server (AVM)
+category: database
+status: approved
+kind: avm
+source: Azure/avm-res-dbforpostgresql-flexibleserver/azurerm
+version: "0.2.2"
+registry_url: https://registry.terraform.io/modules/Azure/avm-res-dbforpostgresql-flexibleserver/azurerm/latest
+# References its RG via resource_group_name (a string).
+rg_ref: resource_group_name
+supports_tags: true
+required_inputs: [name, location, resource_group_name]
+description: >
+  PostgreSQL Flexible Server from Azure Verified Modules. Disable public network
+  access and use VNet integration on the delegated db subnet (SEC-DATA-001). Set the
+  admin password via `administrator_password_wo` (write-only — never stored in state),
+  satisfying SEC-SECRET-001 / SEC-STATE-001.
+key_inputs:
+  - "name (string, required) — abbr: psql"
+  - "location (string, required)"
+  - "resource_group_name (string, required)"
+  - "administrator_login (string, optional)"
+  - "administrator_password_wo (string, write-only, optional) — preferred; not in state"
+  - "delegated_subnet_id / private DNS — for VNet integration (SEC-DATA-001)"
+  - "tags (map(string)) — MANDATORY by org standard"
+outputs:
+  - name: resource_id
+    description: "Server resource ID."
+  - name: fqdn
+    description: "Fully qualified domain name of the server."
+example: |
+  module "postgresql_flexible" {
+    source  = "Azure/avm-res-dbforpostgresql-flexibleserver/azurerm"
+    version = "0.2.2"
+
+    name                = "acme-prod-payments-psql01"
+    location            = "westeurope"
+    resource_group_name = module.resource_group.name
+
+    administrator_login          = "pgadmin"
+    administrator_password_wo    = random_password.pg_admin.result  # write-only: not persisted in state
+    administrator_password_wo_version = 1
+    tags                = local.common_tags
+  }

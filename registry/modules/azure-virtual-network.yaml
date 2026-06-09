@@ -1,0 +1,44 @@
+name: azure-virtual-network
+display_name: Azure Virtual Network (AVM)
+category: networking
+status: approved
+kind: avm
+source: Azure/avm-res-network-virtualnetwork/azurerm
+version: "0.17.1"
+registry_url: https://registry.terraform.io/modules/Azure/avm-res-network-virtualnetwork/azurerm/latest
+# This module references its RG via parent_id (the RG resource ID), NOT a name.
+rg_ref: parent_id
+supports_tags: true
+required_inputs: [name, location, parent_id, address_space]
+description: >
+  Virtual network from Azure Verified Modules. Subnets are declared via the
+  `subnets` map. Create a dedicated 'private-endpoints' subnet for storage/KV and
+  a delegated 'db' subnet for Postgres. No public inbound (SEC-NET-001).
+key_inputs:
+  - "name (string, required)"
+  - "location (string, required)"
+  - "parent_id (string, required) — the resource group resource_id"
+  - "address_space (list(string), required) — e.g. [\"10.20.0.0/16\"]"
+  - "subnets (map(object), optional) — each subnet has name + address_prefixes"
+  - "tags (map(string)) — MANDATORY by org standard"
+outputs:
+  - name: resource_id
+    description: "VNet resource ID."
+  - name: subnets
+    description: "Map of subnet key -> subnet object (use .resource_id for child wiring)."
+example: |
+  module "virtual_network" {
+    source  = "Azure/avm-res-network-virtualnetwork/azurerm"
+    version = "0.17.1"
+
+    name          = "acme-prod-payments-vnet01"
+    location      = "westeurope"
+    parent_id     = module.resource_group.resource_id
+    address_space = ["10.20.0.0/16"]
+    subnets = {
+      private-endpoints = { name = "private-endpoints", address_prefixes = ["10.20.0.0/24"] }
+      db                = { name = "db",                address_prefixes = ["10.20.1.0/24"] }
+      app               = { name = "app",               address_prefixes = ["10.20.2.0/24"] }
+    }
+    tags = local.common_tags
+  }

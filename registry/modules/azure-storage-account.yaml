@@ -1,0 +1,41 @@
+name: azure-storage-account
+display_name: Azure Storage Account (AVM)
+category: storage
+status: approved
+kind: avm
+source: Azure/avm-res-storage-storageaccount/azurerm
+version: "0.7.2"
+registry_url: https://registry.terraform.io/modules/Azure/avm-res-storage-storageaccount/azurerm/latest
+# References its RG via parent_id (the RG resource ID).
+rg_ref: parent_id
+supports_tags: true
+required_inputs: [name, location, parent_id]
+description: >
+  Storage account from Azure Verified Modules — secure by AVM default (TLS 1.2,
+  blob public access disabled). For org compliance set shared_access_key_enabled =
+  false and add a private endpoint on the private-endpoints subnet (SEC-STORAGE-001/002).
+key_inputs:
+  - "name (string, required) — Azure enforces 3-24 lowercase alnum (no hyphens)"
+  - "location (string, required)"
+  - "parent_id (string, required) — the resource group resource_id"
+  - "account_replication_type (string, optional) — ZRS minimum for prod"
+  - "shared_access_key_enabled (bool, optional) — set false for SEC-STORAGE-002"
+  - "private_endpoints (map(object), optional) — attach to the PE subnet"
+  - "tags (map(string)) — MANDATORY by org standard"
+outputs:
+  - name: resource_id
+    description: "Storage account resource ID."
+  - name: name
+    description: "Storage account name."
+example: |
+  module "storage_account" {
+    source  = "Azure/avm-res-storage-storageaccount/azurerm"
+    version = "0.7.2"
+
+    name                      = "acmeprodpaymentsst01"
+    location                  = "westeurope"
+    parent_id                 = module.resource_group.resource_id
+    account_replication_type  = "ZRS"
+    shared_access_key_enabled = false
+    tags                      = local.common_tags
+  }

@@ -1,0 +1,43 @@
+# TEMPLATE — your own module, hosted in a GitHub repo (no registry product needed).
+#
+# This file is NOT listed in catalog.yaml, so the server does not surface it.
+# To publish one of YOUR modules to the platform:
+#   1. Copy this file to registry/modules/<your-module>.yaml
+#   2. Fill in the real source (a git:: address to your repo) + version (a git tag)
+#   3. Set status: approved and add <your-module> to catalog.yaml
+#   4. Call refresh_registry() (or restart the server)
+#
+# Git source format (pin to a tag via ?ref=):
+#   git::https://github.com/<you>/terraform-azure-modules.git//modules/<name>?ref=v1.0.0
+
+name: azure-example-custom
+display_name: Example Custom Module (your own, git-sourced)
+category: custom
+status: template            # change to "approved" to activate
+kind: custom                # custom = your own git module (vs. avm)
+source: git::https://github.com/CHANGE-ME/terraform-azure-modules.git//modules/example?ref=v1.0.0
+version: ""                 # git:: sources pin via ?ref= in the source, not a version arg
+rg_ref: resource_group_name # or parent_id — match how YOUR module is written
+supports_tags: true
+required_inputs: [name, location, resource_group_name]
+description: >
+  Template entry showing how to register a module you own and host in GitHub.
+  The platform treats AVM and your-own git modules identically — the AI agent
+  queries and wires both the same way.
+key_inputs:
+  - "name (string, required)"
+  - "location (string, required)"
+  - "resource_group_name (string, required)"
+  - "tags (map(string)) — MANDATORY by org standard"
+outputs:
+  - name: resource_id
+    description: "Primary resource ID your module exposes."
+example: |
+  module "example_custom" {
+    source = "git::https://github.com/CHANGE-ME/terraform-azure-modules.git//modules/example?ref=v1.0.0"
+
+    name                = "acme-prod-payments-xyz01"
+    location            = "westeurope"
+    resource_group_name = module.resource_group.name
+    tags                = local.common_tags
+  }

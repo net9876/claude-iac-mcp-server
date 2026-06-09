@@ -1,0 +1,9 @@
+# Approved module catalog. Each entry points to a module spec file under registry/modules/.
+# Only modules listed here (status: approved) are surfaced to developers.
+modules:
+  - azure-resource-group
+  - azure-virtual-network
+  - azure-storage-account
+  - azure-postgresql-flexible
+  - azure-aks
+  - azure-key-vault

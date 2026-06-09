@@ -1,0 +1,65 @@
+organization: acme
+
+# ---------------------------------------------------------------------------
+# Naming standard
+# Pattern:  {org}-{env}-{workload}-{abbr}[-NN]
+# Example:  acme-prod-payments-st01
+# ---------------------------------------------------------------------------
+naming:
+  pattern: "{org}-{env}-{workload}-{abbr}"
+  regex: "^acme-(dev|test|prod)-[a-z0-9]{2,12}-(rg|st|vnet|snet|psql|aks|kv|law|appi)[0-9]{0,2}$"
+  resource_abbreviations:
+    resource_group: rg
+    storage_account: st
+    virtual_network: vnet
+    subnet: snet
+    postgresql_flexible_server: psql
+    kubernetes_cluster: aks
+    key_vault: kv
+    log_analytics_workspace: law
+    application_insights: appi
+
+environments:
+  - dev
+  - test
+  - prod
+
+# Only these Azure regions are approved (data-residency: EU).
+allowed_regions:
+  - westeurope
+  - northeurope
+
+# Every resource MUST carry these tags. Values in <angle-brackets> are required.
+required_tags:
+  environment: "<dev|test|prod>"
+  owner: "<team-email>"
+  cost_center: "<cost-center-id>"
+  project: "<project-name>"
+  managed_by: "terraform"
+
+# Approved module sources. The platform is HYBRID:
+#   - Azure Verified Modules (Microsoft's curated, compliant modules) from the
+#     public Terraform Registry — the approved baseline.
+#   - Your own modules hosted in GitHub, referenced via a git:: source — no
+#     registry product required.
+# Provider sources (e.g. hashicorp/azurerm) are NOT module sources and are exempt.
+registry:
+  allowed_sources:
+    - "Azure/avm-*"                    # Azure Verified Modules (public registry)
+    - "git::https://github.com/*"      # your own modules in GitHub
+    - "app.terraform.io/acme/*"        # (optional) a private registry, if you adopt one
+
+# Security baseline rules (enforced by validate_config heuristics + reviewed in PR/CI).
+security:
+  - id: SEC-STORAGE-001
+    rule: "Storage accounts must set min_tls_version = TLS1_2 and disable public blob access."
+  - id: SEC-STORAGE-002
+    rule: "Storage accounts must set shared_access_key_enabled = false (use Entra ID auth)."
+  - id: SEC-NET-001
+    rule: "No resource may expose 0.0.0.0/0 inbound; use private endpoints or scoped NSGs."
+  - id: SEC-DATA-001
+    rule: "PostgreSQL must have public network access disabled and use VNet integration."
+  - id: SEC-SECRET-001
+    rule: "Secrets must come from Key Vault or write-only (_wo) args, never hardcoded in HCL."
+  - id: SEC-STATE-001
+    rule: "Remote state must be an Azure Storage backend with versioning + soft-delete enabled."

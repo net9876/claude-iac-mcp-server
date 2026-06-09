@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "acme-iac-platform": {
+      "command": "python",
+      "args": ["./server/iac_mcp_server.py"],
+      "env": {}
+    }
+  }
+}

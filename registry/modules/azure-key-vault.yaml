@@ -1,0 +1,51 @@
+name: azure-key-vault
+display_name: Azure Key Vault (AVM)
+category: security
+status: approved
+kind: avm
+source: Azure/avm-res-keyvault-vault/azurerm
+version: "0.10.2"
+registry_url: https://registry.terraform.io/modules/Azure/avm-res-keyvault-vault/azurerm/latest
+# References its RG via resource_group_name (a string), NOT parent_id.
+rg_ref: resource_group_name
+supports_tags: true
+required_inputs: [name, location, resource_group_name, tenant_id]
+description: >
+  Key Vault from Azure Verified Modules — RBAC authorization, purge protection,
+  soft delete on by default. The canonical home for all secrets (SEC-SECRET-001).
+  NOTE: this AVM module DOES manage secrets natively via `secrets` + `secrets_value`,
+  so there is no need for raw azurerm_key_vault_secret resources.
+key_inputs:
+  - "name (string, required)"
+  - "location (string, required)"
+  - "resource_group_name (string, required)"
+  - "tenant_id (string, required) — data.azurerm_client_config.current.tenant_id"
+  - "secrets (map(object)) — declare secret metadata (name, content_type, ...)"
+  - "secrets_value (map(string), sensitive) — the secret values, keyed to match secrets"
+  - "tags (map(string)) — MANDATORY by org standard"
+outputs:
+  - name: resource_id
+    description: "Key Vault resource ID."
+  - name: resource
+    description: "The key vault resource object (vault_uri available at .vault_uri)."
+  - name: secrets
+    description: "Map of created secrets, including resource_id/versionless_id per key."
+example: |
+  module "key_vault" {
+    source  = "Azure/avm-res-keyvault-vault/azurerm"
+    version = "0.10.2"
+
+    name                = "acme-prod-payments-kv01"
+    location            = "westeurope"
+    resource_group_name = module.resource_group.name
+    tenant_id           = data.azurerm_client_config.current.tenant_id
+
+    # Native secret management — no raw azurerm_key_vault_secret needed.
+    secrets = {
+      pg-admin = { name = "pg-admin" }
+    }
+    secrets_value = {
+      pg-admin = random_password.pg_admin.result
+    }
+    tags = local.common_tags
+  }

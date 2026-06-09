@@ -1,0 +1,18 @@
+# Local backend override — point Terraform at YOUR real state account.
+#
+# Usage:
+#   1. Copy this file to backend.local.hcl   (the .hcl is gitignored — never published)
+#   2. terraform init -backend-config=backend.local.hcl
+#
+# These values override the illustrative defaults in versions.tf.
+# Example below targets the existing "myterrasa" account (RG: common).
+
+resource_group_name  = "common"
+storage_account_name = "myterrasa"
+container_name       = "tfstate"
+key                  = "agentic-iac-platform/prod/payments.tfstate"
+
+# use_azuread_auth = true requires the caller to hold "Storage Blob Data Contributor"
+# on the account. If you'd rather use the account access key, remove this line and
+# set ARM_ACCESS_KEY in your environment instead.
+use_azuread_auth = true
