@@ -50,7 +50,8 @@ Write-Host "Connect Claude Code (user scope, available in every project):"
 Write-Host "  claude mcp add --transport http --scope user acme-iac-platform https://$fqdn/mcp"
 Write-Host ""
 Write-Host "GitHub Copilot (.vscode/mcp.json):"
-Write-Host '  { "servers": { "acme-iac-platform": { "type": "http", "url": "https://' + $fqdn + '/mcp" } } }'
+$copilotJson = '  { "servers": { "acme-iac-platform": { "type": "http", "url": "https://' + $fqdn + '/mcp" } } }'
+Write-Host $copilotJson
 Write-Host ""
 Write-Host "WARNING: ingress is public and UNAUTHENTICATED — fine for a short test," -ForegroundColor Yellow
 Write-Host "         add auth before any real org use (see deploy/README.md)." -ForegroundColor Yellow
