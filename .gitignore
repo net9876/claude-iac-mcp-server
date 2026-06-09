@@ -32,3 +32,6 @@ venv/
 .idea/
 .DS_Store
 Thumbs.db
+
+# ---- Local Claude Code state (machine-specific; the shareable .mcp.json is at root) ----
+.claude/
