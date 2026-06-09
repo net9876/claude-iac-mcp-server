@@ -369,4 +369,15 @@ def _glob_match(pattern: str, value: str) -> bool:
 
 
 if __name__ == "__main__":
-    mcp.run()  # stdio transport
+    import os
+
+    # Default = stdio (local): Claude Code / Copilot auto-spawn this per session.
+    # Set MCP_TRANSPORT=http to serve over HTTP for a shared/hosted (org) instance;
+    # the MCP endpoint is then available at  http://<host>:<port>/mcp
+    transport = os.environ.get("MCP_TRANSPORT", "stdio").lower()
+    if transport in ("http", "streamable-http"):
+        mcp.settings.host = os.environ.get("MCP_HOST", "0.0.0.0")
+        mcp.settings.port = int(os.environ.get("PORT", os.environ.get("MCP_PORT", "8000")))
+        mcp.run(transport="streamable-http")
+    else:
+        mcp.run()

@@ -39,7 +39,9 @@ developer ──▶ Claude Code / Copilot ──MCP──▶ iac_mcp_server ─�
 | `standards/standards.yaml` | Naming, regions, required tags, source allowlist, security baseline |
 | `skills/iac-self-service/SKILL.md` | The agent skill encoding the standards |
 | `environments/prod/payments/` | Example output: a compliant, AVM-based `main.tf` |
-| `.mcp.json` | Claude Code MCP wiring |
+| `.mcp.json` | Claude Code MCP wiring (local stdio) |
+| `Dockerfile` | Container image for a hosted (HTTP) instance |
+| `deploy/` | One-command Azure deploy + teardown scripts and docs |
 | `tests/smoke_test.py` | Fast smoke test of the tools (19 checks) |
 
 ## MCP tools
@@ -98,6 +100,30 @@ Copilot (VS Code) reads MCP servers from `.vscode/mcp.json`:
 
 Mirror the rules from `SKILL.md` into `.github/copilot-instructions.md` so Copilot Chat
 applies them.
+
+## Two run modes: local (stdio) vs hosted (HTTP)
+
+| | Local | Hosted (org) |
+|---|---|---|
+| Transport | stdio (default) | HTTP / streamable-http |
+| Who starts it | Claude Code / Copilot auto-spawn it per session | Always-on Azure Container App |
+| Setup | none — `.mcp.json` already wires it | `deploy/deploy-azure.ps1` (one command) |
+| Connect | `.mcp.json` (project) or `claude mcp add` | `claude mcp add --transport http … https://<fqdn>/mcp` |
+
+Switch a process to HTTP mode with `MCP_TRANSPORT=http` (the `Dockerfile` sets this).
+
+### Deploy a shared instance to Azure
+
+So a whole team points at one URL instead of running it locally:
+
+```powershell
+az login
+.\deploy\deploy-azure.ps1     # builds the image in Azure + deploys to Container Apps
+```
+
+It prints the MCP URL and the connect command. Tear down with
+`.\deploy\destroy-azure.ps1`. Full guide (connection, one-time test, **auth before
+real use**, cost): [deploy/README.md](deploy/README.md).
 
 ## Deploying the example
 
