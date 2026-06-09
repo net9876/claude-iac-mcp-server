@@ -98,6 +98,8 @@ Copilot (VS Code) reads MCP servers from `.vscode/mcp.json`:
 }
 ```
 
+For a **hosted** instance, point Copilot at the URL instead:
+`{ "servers": { "acme-iac-platform": { "type": "http", "url": "https://<fqdn>/mcp" } } }`.
 Mirror the rules from `SKILL.md` into `.github/copilot-instructions.md` so Copilot Chat
 applies them.
 
@@ -132,15 +134,22 @@ The generated example lives in `environments/prod/payments/`. To deploy it again
 
 ```powershell
 cd environments/prod/payments
-Copy-Item backend.local.hcl.example backend.local.hcl   # edit values if needed
-terraform init -backend-config=backend.local.hcl
+Copy-Item backend.local.hcl.example backend.local.hcl   # edit values for your state account
+
+# azurerm v4 needs a subscription id; the azurerm backend needs auth to your state account
+$env:ARM_SUBSCRIPTION_ID = (az account show --query id -o tsv)
+# state auth: either set use_azuread_auth in backend.local.hcl (needs Blob Data Contributor),
+# or supply the key:  $env:ARM_ACCESS_KEY = (az storage account keys list -g <rg> -n <sa> --query "[0].value" -o tsv)
+
+terraform init "-backend-config=backend.local.hcl"   # NOTE: quotes are required in PowerShell
 terraform plan
 terraform apply
 ```
 
-The example uses real AVM modules, so `terraform init` actually downloads them. The
-state backend account (e.g. `myterrasa`) must already exist — `backend.local.hcl` is
-gitignored, so your real account names never get published.
+The example uses real AVM modules, so `terraform init` actually downloads them (needs
+Terraform >= 1.11 for the write-only Postgres password). The state backend account
+(e.g. `myterrasa`) must already exist — `backend.local.hcl` is gitignored, so your real
+account names never get published.
 
 ## Add one of YOUR own modules
 
@@ -152,9 +161,10 @@ gitignored, so your real account names never get published.
 
 ## Production hardening (next steps)
 
+- **Add authentication** to the hosted instance (the `deploy/` HTTP server ships open by
+  default). Put it behind Entra ID / an API gateway before any real org use — see the
+  Security section of [deploy/README.md](deploy/README.md).
 - Replace the heuristic `validate_config` with **OPA/Conftest** policies, run both here
   and in CI (the heuristic is a fast pre-flight, not the enforcement gate).
 - Pin AVM versions centrally and add a renovate/dependabot job to bump them.
-- Add auth + run the server over HTTP (streamable-http) for a shared team instance
-  instead of per-developer stdio.
 - Emit telemetry on which modules are generated to measure adoption.
