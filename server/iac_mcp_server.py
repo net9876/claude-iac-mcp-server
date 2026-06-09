@@ -376,8 +376,28 @@ if __name__ == "__main__":
     # the MCP endpoint is then available at  http://<host>:<port>/mcp
     transport = os.environ.get("MCP_TRANSPORT", "stdio").lower()
     if transport in ("http", "streamable-http"):
+        from mcp.server.transport_security import TransportSecuritySettings
+
         mcp.settings.host = os.environ.get("MCP_HOST", "0.0.0.0")
         mcp.settings.port = int(os.environ.get("PORT", os.environ.get("MCP_PORT", "8000")))
+
+        # MCP's DNS-rebinding protection validates the Host header against an
+        # allow-list (default: localhost only). Behind a platform ingress (e.g.
+        # Azure Container Apps) the Host is the ingress FQDN, which would 421.
+        # Set MCP_ALLOWED_HOSTS to lock to specific hosts; otherwise disable the
+        # check (the ingress + any auth in front are the real boundary).
+        allowed = [h.strip() for h in os.environ.get("MCP_ALLOWED_HOSTS", "").split(",") if h.strip()]
+        if allowed:
+            mcp.settings.transport_security = TransportSecuritySettings(
+                enable_dns_rebinding_protection=True,
+                allowed_hosts=allowed,
+                allowed_origins=allowed,
+            )
+        else:
+            mcp.settings.transport_security = TransportSecuritySettings(
+                enable_dns_rebinding_protection=False
+            )
+
         mcp.run(transport="streamable-http")
     else:
         mcp.run()

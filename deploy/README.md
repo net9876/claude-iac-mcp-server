@@ -98,6 +98,12 @@ one of:
 The registry/standards served here are not secrets, but an open write-capable MCP
 endpoint is still something you want behind auth.
 
+**Host validation.** In HTTP mode the server disables MCP's DNS-rebinding Host check
+by default, because behind Container Apps the `Host` is the ingress FQDN (otherwise
+every request gets `421 Misdirected Request`). To lock it back down to specific hosts,
+set the `MCP_ALLOWED_HOSTS` env var (comma-separated) on the Container App — e.g.
+`az containerapp update -n iac-mcp-server -g rg-iac-mcp --set-env-vars MCP_ALLOWED_HOSTS=<your-fqdn>`.
+
 ## Updating the hosted instance
 
 Re-run `deploy-azure.ps1` — `az containerapp up` rebuilds from the current source and
