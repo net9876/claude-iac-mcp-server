@@ -1,9 +1,13 @@
 # Approved module catalog. Each entry points to a module spec file under registry/modules/.
 # Only modules listed here (status: approved) are surfaced to developers.
 modules:
+  # Azure Verified Modules (the curated baseline)
   - azure-resource-group
   - azure-virtual-network
   - azure-storage-account
   - azure-postgresql-flexible
   - azure-aks
   - azure-key-vault
+  # Our own modules (github.com/net9876/terraform-azure-modules, git:: sources)
+  - azure-storage-hardened
+  - azure-log-analytics

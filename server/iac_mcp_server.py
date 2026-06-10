@@ -59,7 +59,10 @@ def _modules() -> dict[str, dict[str, Any]]:
 
 
 def _abbr_for(module: dict[str, Any]) -> str | None:
-    """Map a module's category/name to the org resource abbreviation."""
+    """Org resource abbreviation: the module spec's own `abbr` field wins,
+    falling back to a name-keyword heuristic for older specs."""
+    if module.get("abbr"):
+        return module["abbr"]
     abbrs = _standards()["naming"]["resource_abbreviations"]
     name = module["name"]
     # Heuristic: match on a keyword in the module name.
@@ -215,12 +218,13 @@ def generate_module_usage(
     abbr = _abbr_for(mod) or "res"
     resource_name = f"{org}-{environment}-{workload}-{abbr}{instance:02d}"
 
-    # Storage account names: Azure forbids hyphens / uppercase.
+    # Some Azure names forbid hyphens/uppercase (e.g. storage accounts). Specs
+    # opt in via `flatten_name: true`.
     name_value = resource_name
-    if module_name == "azure-storage-account":
+    if mod.get("flatten_name"):
         name_value = re.sub(r"[^a-z0-9]", "", resource_name.lower())[:24]
         warnings.append(
-            "Storage account name was flattened to satisfy Azure's 3-24 lowercase-alnum rule."
+            "Name was flattened to satisfy Azure's 3-24 lowercase-alnum rule."
         )
 
     # Mandatory tags block.

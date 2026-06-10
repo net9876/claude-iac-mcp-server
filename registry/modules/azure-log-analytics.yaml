@@ -1,0 +1,39 @@
+name: azure-log-analytics
+display_name: Log Analytics Workspace (org native module)
+category: observability
+status: approved
+kind: custom
+source: git::https://github.com/net9876/terraform-azure-modules.git//modules/log-analytics?ref=v0.1.0
+version: ""            # git:: sources pin via ?ref= in the source
+registry_url: https://github.com/net9876/terraform-azure-modules/tree/main/modules/log-analytics
+rg_ref: resource_group_name
+supports_tags: true
+abbr: law
+description: >
+  The org's opinionated Log Analytics workspace — written natively (no AVM
+  dependency). Cost-safe by default: PerGB2018 SKU, 30-day retention, and a
+  1 GB/day ingestion cap (set daily_quota_gb = -1 to lift).
+required_inputs: [name, location, resource_group_name, tags]
+key_inputs:
+  - "name (string, required) — abbr: law"
+  - "location (string, required) — approved region"
+  - "resource_group_name (string, required)"
+  - "retention_days (number, optional, default 30) — 30-730"
+  - "daily_quota_gb (number, optional, default 1) — daily ingestion cap; -1 = unlimited"
+  - "tags (map(string), required) — org mandatory tags"
+outputs:
+  - name: resource_id
+    description: "Workspace resource ID."
+  - name: workspace_id
+    description: "Workspace (customer) ID for agents/diagnostics."
+  - name: name
+    description: "Workspace name."
+example: |
+  module "log_analytics" {
+    source = "git::https://github.com/net9876/terraform-azure-modules.git//modules/log-analytics?ref=v0.1.0"
+
+    name                = "acme-prod-payments-law01"
+    location            = "westeurope"
+    resource_group_name = module.resource_group.name
+    tags                = local.common_tags
+  }

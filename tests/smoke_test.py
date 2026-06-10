@@ -21,7 +21,7 @@ def run() -> int:
         print(f"[{status}] {label}")
 
     mods = s.list_modules()
-    check("list_modules returns 6 approved modules", len(mods) == 6)
+    check("list_modules returns 8 approved modules (6 AVM + 2 custom)", len(mods) == 8)
 
     db = s.search_modules("postgres database")
     check("search finds postgres first", db and db[0]["name"] == "azure-postgresql-flexible")
@@ -60,6 +60,28 @@ def run() -> int:
     good = s.validate_config(gen["hcl"])
     check("generated config has no source/region errors",
           not any(f["rule"] in ("REG-SRC", "REGION") for f in good["findings"]))
+
+    # ── Hybrid registry: our own git-sourced modules ──────────────────────────
+    law = s.get_module("azure-log-analytics")
+    check("custom module served with git:: source",
+          law["source"].startswith("git::https://github.com/net9876/terraform-azure-modules"))
+
+    g_law = s.generate_module_usage("azure-log-analytics", "payments", "prod")
+    check("custom module uses spec abbr (law)",
+          g_law["resource_name"] == "acme-prod-payments-law01")
+    check("git module emits no version line", "version =" not in g_law["hcl"])
+    check("log-analytics wired via resource_group_name",
+          "resource_group_name = module.resource_group.name" in g_law["hcl"])
+
+    g_hard = s.generate_module_usage("azure-storage-hardened", "payments", "prod")
+    check("hardened storage flattens name via spec flag",
+          g_hard["resource_name"] == "acmeprodpaymentsst01")
+    check("hardened storage wired via parent_id",
+          "parent_id = module.resource_group.resource_id" in g_hard["hcl"])
+
+    v_law = s.validate_config(g_law["hcl"])
+    check("git:: source passes the allowlist",
+          not any(f["rule"] == "REG-SRC" for f in v_law["findings"]))
 
     # Regression: a full file with required_providers must NOT trip REG-SRC.
     full = '''

@@ -1,0 +1,38 @@
+name: azure-storage-hardened
+display_name: Hardened Storage Account (org wrapper over AVM)
+category: storage
+status: approved
+kind: custom
+source: git::https://github.com/net9876/terraform-azure-modules.git//modules/storage-hardened?ref=v0.1.0
+version: ""            # git:: sources pin via ?ref= in the source
+registry_url: https://github.com/net9876/terraform-azure-modules/tree/main/modules/storage-hardened
+rg_ref: parent_id
+supports_tags: true
+abbr: st
+flatten_name: true     # Azure: 3-24 lowercase alphanumeric, no hyphens
+description: >
+  The org's hardened storage account — a thin wrapper over the Azure Verified
+  storage module that LOCKS the non-negotiables: shared_access_key_enabled is
+  always false (Entra ID auth only, SEC-STORAGE-002) and replication defaults to
+  ZRS. Prefer this over the raw AVM storage module for workload storage.
+required_inputs: [name, location, parent_id, tags]
+key_inputs:
+  - "name (string, required) — 3-24 lowercase alphanumeric"
+  - "location (string, required) — approved region"
+  - "parent_id (string, required) — the resource group resource_id"
+  - "replication_type (string, optional, default ZRS) — ZRS | LRS | GRS"
+  - "tags (map(string), required) — org mandatory tags"
+outputs:
+  - name: resource_id
+    description: "Storage account resource ID."
+  - name: name
+    description: "Storage account name."
+example: |
+  module "storage" {
+    source = "git::https://github.com/net9876/terraform-azure-modules.git//modules/storage-hardened?ref=v0.1.0"
+
+    name      = "acmeprodpaymentsst01"
+    location  = "westeurope"
+    parent_id = module.resource_group.resource_id
+    tags      = local.common_tags
+  }
